@@ -114,6 +114,7 @@ const (
 	// DeletionProtectionForCRDCascadingGate enable deletionProtection for crd Cascading
 	DeletionProtectionForCRDCascadingGate featuregate.Feature = "DeletionProtectionForCRDCascadingGate"
 
+<<<<<<< HEAD
 	// Enables a enhanced livenessProbe solution
 	EnhancedLivenessProbeGate featuregate.Feature = "EnhancedLivenessProbe"
 
@@ -131,6 +132,11 @@ const (
 
 	// Enables policies auto resizing PVCs created by a StatefulSet when user expands volumeClaimTemplates.
 	StatefulSetAutoResizePVCGate featuregate.Feature = "StatefulSetAutoResizePVCGate"
+=======
+	// InPlaceWorkloadVerticalScaling enable CloneSet/Advanced StatefulSet controller to support vertical scaling
+	// of managed Pods.
+	InPlaceWorkloadVerticalScaling featuregate.Feature = "InPlaceWorkloadVerticalScaling"
+>>>>>>> 62531456 (feat: enhanced in-place update module to support vertical scaling)
 )
 
 var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -153,6 +159,7 @@ var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	SidecarTerminator:                         {Default: false, PreRelease: featuregate.Alpha},
 	PodProbeMarkerGate:                        {Default: true, PreRelease: featuregate.Alpha},
 	PreDownloadImageForDaemonSetUpdate:        {Default: false, PreRelease: featuregate.Alpha},
+<<<<<<< HEAD
 
 	CloneSetEventHandlerOptimization:      {Default: false, PreRelease: featuregate.Alpha},
 	PreparingUpdateAsUpdate:               {Default: false, PreRelease: featuregate.Alpha},
@@ -166,6 +173,14 @@ var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	PodIndexLabel:                          {Default: true, PreRelease: featuregate.Beta},
 	EnableExternalCerts:                    {Default: false, PreRelease: featuregate.Alpha},
 	StatefulSetAutoResizePVCGate:           {Default: false, PreRelease: featuregate.Alpha},
+=======
+	CloneSetEventHandlerOptimization:          {Default: false, PreRelease: featuregate.Alpha},
+	PreparingUpdateAsUpdate:                   {Default: false, PreRelease: featuregate.Alpha},
+	ImagePullJobGate:                          {Default: false, PreRelease: featuregate.Alpha},
+	ResourceDistributionGate:                  {Default: false, PreRelease: featuregate.Alpha},
+	DeletionProtectionForCRDCascadingGate:     {Default: false, PreRelease: featuregate.Alpha},
+	InPlaceWorkloadVerticalScaling:            {Default: false, PreRelease: featuregate.Alpha},
+>>>>>>> 62531456 (feat: enhanced in-place update module to support vertical scaling)
 }
 
 func init() {
