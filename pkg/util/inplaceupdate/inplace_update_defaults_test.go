@@ -18,17 +18,21 @@ package inplaceupdate
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 
+	appspub "github.com/openkruise/kruise/apis/apps/pub"
+	"github.com/openkruise/kruise/pkg/util"
+	"github.com/openkruise/kruise/pkg/util/volumeclaimtemplate"
+
+	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	apiequality "k8s.io/apimachinery/pkg/api/equality"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	testingclock "k8s.io/utils/clock/testing"
-
-	appspub "github.com/openkruise/kruise/apis/apps/pub"
-	"github.com/openkruise/kruise/pkg/util"
 )
 
 func TestDefaultPatchUpdateSpecToPod(t *testing.T) {
@@ -464,6 +468,286 @@ func TestDefaultPatchUpdateSpecToPod(t *testing.T) {
 			if !apiequality.Semantic.DeepEqual(gotPod, expectedPod) {
 				t.Fatalf("expected pod \n%v\n but got \n%v", util.DumpJSON(expectedPod), util.DumpJSON(gotPod))
 			}
+		})
+	}
+}
+
+func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
+	type args struct {
+		oldRevision *apps.ControllerRevision
+		newRevision *apps.ControllerRevision
+		opts        *UpdateOptions
+	}
+	oldData := `{
+  "spec": {
+    "template": {
+      "$patch": "replace",
+      "metadata": {
+        "creationTimestamp": null,
+        "labels": {
+          "app": "nginx"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "env": [
+              {
+                "name": "version",
+                "value": "v1"
+              }
+            ],
+            "image": "nginx:stable-alpine22",
+            "imagePullPolicy": "Always",
+            "name": "nginx",
+            "resources": {},
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "volumeMounts": [
+              {
+                "mountPath": "/usr/share/nginx/html",
+                "name": "www-data"
+              }
+            ]
+          }
+        ],
+        "dnsPolicy": "ClusterFirst",
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "securityContext": {},
+        "terminationGracePeriodSeconds": 30
+      }
+    }
+  }
+}`
+	newData := `{
+  "spec": {
+    "template": {
+      "$patch": "replace",
+      "metadata": {
+        "creationTimestamp": null,
+        "labels": {
+          "app": "nginx"
+        }
+      },
+      "spec": {
+        "containers": [
+          {
+            "env": [
+              {
+                "name": "version",
+                "value": "v1"
+              }
+            ],
+            "image": "nginx:stable-alpine",
+            "imagePullPolicy": "Always",
+            "name": "nginx",
+            "resources": {},
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "volumeMounts": [
+              {
+                "mountPath": "/usr/share/nginx/html",
+                "name": "www-data"
+              }
+            ]
+          }
+        ],
+        "dnsPolicy": "ClusterFirst",
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "securityContext": {},
+        "terminationGracePeriodSeconds": 30
+      }
+    }
+  }
+}`
+	tests := []struct {
+		name string
+		args args
+		want *UpdateSpec
+	}{
+		{
+			name: "both revision annotation is nil=> ignore",
+			args: args{
+				oldRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "old-revision",
+						Annotations: nil,
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(oldData),
+					},
+				},
+				newRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "new-revision",
+						Annotations: map[string]string{},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(newData),
+					},
+				},
+			},
+			want: &UpdateSpec{
+				Revision: "new-revision",
+				ContainerImages: map[string]string{
+					"nginx": "nginx:stable-alpine",
+				},
+			},
+		},
+		{
+			name: "old revision annotation is nil=> ignore",
+			args: args{
+				oldRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "old-revision",
+						Annotations: nil,
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(oldData),
+					},
+				},
+				newRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "new-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: "balala"},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(newData),
+					},
+				},
+			},
+			want: &UpdateSpec{
+				Revision: "new-revision",
+				ContainerImages: map[string]string{
+					"nginx": "nginx:stable-alpine",
+				},
+			},
+		},
+		{
+			name: "new revision annotation is nil => ignore",
+			args: args{
+				oldRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "old-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: "balala"},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(oldData),
+					},
+				},
+				newRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "new-revision",
+						Annotations: nil,
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(newData),
+					},
+				},
+			},
+			want: &UpdateSpec{
+				Revision: "new-revision",
+				ContainerImages: map[string]string{
+					"nginx": "nginx:stable-alpine",
+				},
+			},
+		},
+		{
+			name: "revision annotation changes => recreate",
+			args: args{
+				oldRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "old-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: ""},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(oldData),
+					},
+				},
+				newRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "new-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: "balala"},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(newData),
+					},
+				},
+			},
+			want: nil,
+		},
+		{
+			name: "the same revision annotation => in-place update",
+			args: args{
+				oldRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "old-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: "balala"},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(oldData),
+					},
+				},
+				newRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "new-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: "balala"},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(newData),
+					},
+				},
+			},
+			want: &UpdateSpec{
+				Revision: "new-revision",
+				ContainerImages: map[string]string{
+					"nginx": "nginx:stable-alpine",
+				},
+			},
+		},
+		{
+			name: "both empty revision annotation => in-place update",
+			args: args{
+				oldRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "old-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: ""},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(oldData),
+					},
+				},
+				newRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "new-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: ""},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(newData),
+					},
+				},
+			},
+			want: &UpdateSpec{
+				Revision: "new-revision",
+				ContainerImages: map[string]string{
+					"nginx": "nginx:stable-alpine",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := defaultCalculateInPlaceUpdateSpec(tt.args.oldRevision, tt.args.newRevision, tt.args.opts)
+			if got != nil && tt.want != nil {
+				if !reflect.DeepEqual(got.ContainerImages, tt.want.ContainerImages) {
+					t.Errorf("defaultCalculateInPlaceUpdateSpec() = %v, want %v", got, tt.want)
+				}
+			} else if !(got == nil && tt.want == nil) {
+				t.Errorf("defaultCalculateInPlaceUpdateSpec() = %v, want %v", got, tt.want)
+			}
+			// got == nil && tt.want == nil => pass
 		})
 	}
 }

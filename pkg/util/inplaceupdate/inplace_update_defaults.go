@@ -29,6 +29,8 @@ import (
 	utilcontainerlaunchpriority "github.com/openkruise/kruise/pkg/util/containerlaunchpriority"
 	utilcontainermeta "github.com/openkruise/kruise/pkg/util/containermeta"
 	utilfeature "github.com/openkruise/kruise/pkg/util/feature"
+	"github.com/openkruise/kruise/pkg/util/volumeclaimtemplate"
+
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -231,6 +233,11 @@ func defaultCalculateInPlaceUpdateSpec(oldRevision, newRevision *apps.Controller
 
 	patches, err := jsonpatch.CreatePatch(oldRevision.Data.Raw, newRevision.Data.Raw)
 	if err != nil {
+		return nil
+	}
+
+	canInPlace := volumeclaimtemplate.CanVCTemplateInplaceUpdate(oldRevision, newRevision)
+	if !canInPlace {
 		return nil
 	}
 
