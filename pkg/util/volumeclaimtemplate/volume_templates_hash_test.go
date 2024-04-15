@@ -9,7 +9,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func Test_volumeClaimTemplatesHasher_GetExpectHash(t *testing.T) {
+func Test_vctHasher_GetExpectHash(t *testing.T) {
 	type args struct {
 		templates []v1.PersistentVolumeClaim
 	}

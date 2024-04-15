@@ -1279,4 +1279,26 @@ func testUpdateVolumeClaimTemplates(tester *framework.CloneSetTester, randStr st
 	instanceIds, pvcIds = changeCloneSetAndWaitReady(tester, cs, updateImageOnly,
 		instanceIds, pvcIds, checkPodsDoRecreate(replicas, true),
 		checkPVCsDoRecreate(replicas*2, true), checkPVCSize2)
+
+	// inplace-only update strategy with image change
+	inplaceOnlyWithImage := func(cs *appsv1alpha1.CloneSet) {
+		imageConfig = imageutils.GetConfig(imageutils.Httpd)
+		cs.Spec.Template.Spec.Containers[0].Image = imageConfig.GetE2EImage()
+		cs.Spec.UpdateStrategy = appsv1alpha1.CloneSetUpdateStrategy{Type: appsv1alpha1.InPlaceOnlyCloneSetUpdateStrategyType}
+	}
+	instanceIds, pvcIds = changeCloneSetAndWaitReady(tester, cs, inplaceOnlyWithImage,
+		instanceIds, pvcIds, checkPodsDoRecreate(replicas, false),
+		checkPVCsDoRecreate(replicas*2, false), checkPVCSize2)
+
+	// inplace-only update strategy with image and vct changes -> in-place update with pvc no changes
+	inplaceOnlyWithImageAndVCT := func(cs *appsv1alpha1.CloneSet) {
+		imageConfig = imageutils.GetConfig(imageutils.Redis)
+		cs.Spec.Template.Spec.Containers[0].Image = imageConfig.GetE2EImage()
+		cs.Spec.VolumeClaimTemplates[0].Spec.Resources.Requests = v1.ResourceList{v1.ResourceStorage: resource.MustParse("3Gi")}
+		cs.Spec.VolumeClaimTemplates[1].Spec.Resources.Requests = v1.ResourceList{v1.ResourceStorage: resource.MustParse("3Gi")}
+		cs.Spec.UpdateStrategy = appsv1alpha1.CloneSetUpdateStrategy{Type: appsv1alpha1.InPlaceOnlyCloneSetUpdateStrategyType}
+	}
+	instanceIds, pvcIds = changeCloneSetAndWaitReady(tester, cs, inplaceOnlyWithImageAndVCT,
+		instanceIds, pvcIds, checkPodsDoRecreate(replicas, false),
+		checkPVCsDoRecreate(replicas*2, false), checkPVCSize2)
 }

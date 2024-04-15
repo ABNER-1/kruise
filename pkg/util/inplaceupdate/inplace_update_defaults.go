@@ -236,9 +236,11 @@ func defaultCalculateInPlaceUpdateSpec(oldRevision, newRevision *apps.Controller
 		return nil
 	}
 
-	canInPlace := volumeclaimtemplate.CanVCTemplateInplaceUpdate(oldRevision, newRevision)
-	if !canInPlace {
-		return nil
+	if !opts.IgnoreVolumeClaimTemplatesHashDiff {
+		canInPlace := volumeclaimtemplate.CanVCTemplateInplaceUpdate(oldRevision, newRevision)
+		if !canInPlace {
+			return nil
+		}
 	}
 
 	oldTemp, err := GetTemplateFromRevision(oldRevision)

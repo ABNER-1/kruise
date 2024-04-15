@@ -562,6 +562,8 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
     }
   }
 }`
+
+	ignoreVCTHashUpdateOpts := &UpdateOptions{IgnoreVolumeClaimTemplatesHashDiff: true}
 	tests := []struct {
 		name string
 		args args
@@ -588,6 +590,7 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 						Raw: []byte(newData),
 					},
 				},
+				opts: &UpdateOptions{},
 			},
 			want: &UpdateSpec{
 				Revision: "new-revision",
@@ -617,6 +620,7 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 						Raw: []byte(newData),
 					},
 				},
+				opts: &UpdateOptions{},
 			},
 			want: &UpdateSpec{
 				Revision: "new-revision",
@@ -646,6 +650,7 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 						Raw: []byte(newData),
 					},
 				},
+				opts: &UpdateOptions{},
 			},
 			want: &UpdateSpec{
 				Revision: "new-revision",
@@ -675,6 +680,7 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 						Raw: []byte(newData),
 					},
 				},
+				opts: &UpdateOptions{},
 			},
 			want: nil,
 		},
@@ -699,6 +705,7 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 						Raw: []byte(newData),
 					},
 				},
+				opts: &UpdateOptions{},
 			},
 			want: &UpdateSpec{
 				Revision: "new-revision",
@@ -728,6 +735,189 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 						Raw: []byte(newData),
 					},
 				},
+				opts: &UpdateOptions{},
+			},
+			want: &UpdateSpec{
+				Revision: "new-revision",
+				ContainerImages: map[string]string{
+					"nginx": "nginx:stable-alpine",
+				},
+			},
+		},
+
+		// IgnoreVolumeClaimTemplatesHashDiff is true
+		{
+			name: "IgnoreVolumeClaimTemplatesHashDiff&both revision annotation is nil=> ignore",
+			args: args{
+				oldRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "old-revision",
+						Annotations: nil,
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(oldData),
+					},
+				},
+				newRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "new-revision",
+						Annotations: map[string]string{},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(newData),
+					},
+				},
+				opts: ignoreVCTHashUpdateOpts,
+			},
+			want: &UpdateSpec{
+				Revision: "new-revision",
+				ContainerImages: map[string]string{
+					"nginx": "nginx:stable-alpine",
+				},
+			},
+		},
+		{
+			name: "IgnoreVolumeClaimTemplatesHashDiff&old revision annotation is nil=> ignore",
+			args: args{
+				oldRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "old-revision",
+						Annotations: nil,
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(oldData),
+					},
+				},
+				newRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "new-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: "balala"},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(newData),
+					},
+				},
+				opts: ignoreVCTHashUpdateOpts,
+			},
+			want: &UpdateSpec{
+				Revision: "new-revision",
+				ContainerImages: map[string]string{
+					"nginx": "nginx:stable-alpine",
+				},
+			},
+		},
+		{
+			name: "IgnoreVolumeClaimTemplatesHashDiff&new revision annotation is nil => ignore",
+			args: args{
+				oldRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "old-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: "balala"},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(oldData),
+					},
+				},
+				newRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "new-revision",
+						Annotations: nil,
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(newData),
+					},
+				},
+				opts: ignoreVCTHashUpdateOpts,
+			},
+			want: &UpdateSpec{
+				Revision: "new-revision",
+				ContainerImages: map[string]string{
+					"nginx": "nginx:stable-alpine",
+				},
+			},
+		},
+		{
+			name: "IgnoreVolumeClaimTemplatesHashDiff&revision annotation changes => in-place update",
+			args: args{
+				oldRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "old-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: ""},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(oldData),
+					},
+				},
+				newRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "new-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: "balala"},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(newData),
+					},
+				},
+				opts: ignoreVCTHashUpdateOpts,
+			},
+			want: &UpdateSpec{
+				Revision: "new-revision",
+				ContainerImages: map[string]string{
+					"nginx": "nginx:stable-alpine",
+				},
+			},
+		},
+		{
+			name: "IgnoreVolumeClaimTemplatesHashDiff&the same revision annotation => in-place update",
+			args: args{
+				oldRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "old-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: "balala"},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(oldData),
+					},
+				},
+				newRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "new-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: "balala"},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(newData),
+					},
+				},
+				opts: ignoreVCTHashUpdateOpts,
+			},
+			want: &UpdateSpec{
+				Revision: "new-revision",
+				ContainerImages: map[string]string{
+					"nginx": "nginx:stable-alpine",
+				},
+			},
+		},
+		{
+			name: "IgnoreVolumeClaimTemplatesHashDiff&both empty revision annotation => in-place update",
+			args: args{
+				oldRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "old-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: ""},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(oldData),
+					},
+				},
+				newRevision: &apps.ControllerRevision{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:        "new-revision",
+						Annotations: map[string]string{volumeclaimtemplate.HashAnnotation: ""},
+					},
+					Data: runtime.RawExtension{
+						Raw: []byte(newData),
+					},
+				},
+				opts: ignoreVCTHashUpdateOpts,
 			},
 			want: &UpdateSpec{
 				Revision: "new-revision",
@@ -737,6 +927,7 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := defaultCalculateInPlaceUpdateSpec(tt.args.oldRevision, tt.args.newRevision, tt.args.opts)
