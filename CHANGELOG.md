@@ -1,5 +1,23 @@
 # Change Log
 
+## v1.6.2
+> Change log since v1.6.1
+
+### CloneSet
+- Fix new version of Pods released by cloneSet that doesn't match spec.updateStrategy.partition. ([#1549](https://github.com/openkruise/kruise/pull/1549), [@qswksp](https://github.com/qswksp))
+
+## v1.5.4
+> Chang log since v1.5.3
+
+### CloneSet
+- Fix new version of Pods released by cloneSet that doesn't match spec.updateStrategy.partition. ([#1549](https://github.com/openkruise/kruise/pull/1549), [@qswksp](https://github.com/qswksp))
+
+## v1.4.2
+> Change log since v1.4.1
+
+### CloneSet
+- Fix new version of Pods released by cloneSet that doesn't match spec.updateStrategy.partition. ([#1549](https://github.com/openkruise/kruise/pull/1549), [@qswksp](https://github.com/qswksp))
+
 ## v1.6.1
 > Change log since v1.6.0
 
@@ -24,6 +42,8 @@
 > No, really, you must read this before you upgrade
 - OpenKruise no longer supports Kubernetes versions 1.16, 1.17.
 However it's still possible to use OpenKruise with Kubernetes versions 1.16 and 1.17 as long as KruiseDaemon is not enabled(install/upgrade kruise charts with featureGates="KruiseDaemon=false")
+- Kruise-Daemon will no longer support v1alpha2 CRI runtimes.
+However it's still possible to use OpenKruise on Kubernetes with nodes that only support v1alpha2 CRI as long as KruiseDaemon is not enabled(install/upgrade kruise charts with featureGates="KruiseDaemon=false")
 - OpenKruise leader election default to use leases mode. ([#1407](https://github.com/openkruise/kruise/pull/1407), [dsxing](https://github.com/dsxing))
 For users with OpenKruise version 1.3.0 or lower, please first upgrade your OpenKruise to version 1.4 or 1.5 before upgrading to 1.6.0, so as to avoid unexpected multiple leader problem during the installation.
 - Bump Kubernetes dependency to 1.26.10. ([#1511](https://github.com/openkruise/kruise/pull/1511), [KaiShi](https://github.com/BH4AWS))
@@ -149,7 +169,7 @@ And some bugs were fixed by
 ([#1348](https://github.com/openkruise/kruise/pull/1348), [#1343](https://github.com/openkruise/kruise/pull/1343), [Colvin-Y](https://github.com/Colvin-Y)),
 thanks!
 
-## v.1.4.1
+## v1.4.1
 > Change log since v1.4.0
 
 ### CVE FIX: Enhance kruise-daemon security ([#1482](https://github.com/openkruise/kruise/pull/1482), [veophi](https://github.com/veophi))
