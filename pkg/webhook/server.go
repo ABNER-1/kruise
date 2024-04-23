@@ -30,7 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/conversion"
 
-	webhookutil "github.com/openkruise/kruise/pkg/webhook/util"
 	webhookcontroller "github.com/openkruise/kruise/pkg/webhook/util/controller"
 	"github.com/openkruise/kruise/pkg/webhook/util/health"
 )
@@ -83,9 +82,6 @@ func filterActiveHandlers() {
 
 func SetupWithManager(mgr manager.Manager) error {
 	server := mgr.GetWebhookServer()
-	server.Host = "0.0.0.0"
-	server.Port = webhookutil.GetPort()
-	server.CertDir = webhookutil.GetCertDir()
 
 	// register admission handlers
 	filterActiveHandlers()
@@ -95,7 +91,7 @@ func SetupWithManager(mgr manager.Manager) error {
 	}
 
 	// register conversion webhook
-	server.Register("/convert", &conversion.Webhook{})
+	server.Register("/convert", conversion.NewWebhookHandler(mgr.GetScheme()))
 
 	// register health handler
 	server.Register("/healthz", &health.Handler{})
