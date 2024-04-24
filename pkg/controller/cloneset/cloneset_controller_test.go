@@ -24,14 +24,6 @@ import (
 	"time"
 
 	"github.com/onsi/gomega"
-	"github.com/openkruise/kruise/apis/apps/defaults"
-	appsv1alpha1 "github.com/openkruise/kruise/apis/apps/v1alpha1"
-	clonesetutils "github.com/openkruise/kruise/pkg/controller/cloneset/utils"
-	"github.com/openkruise/kruise/pkg/features"
-	"github.com/openkruise/kruise/pkg/util"
-	utilclient "github.com/openkruise/kruise/pkg/util/client"
-	utilfeature "github.com/openkruise/kruise/pkg/util/feature"
-	"github.com/openkruise/kruise/pkg/util/fieldindex"
 	"golang.org/x/net/context"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -47,7 +39,17 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/openkruise/kruise/apis/apps/defaults"
+	appsv1alpha1 "github.com/openkruise/kruise/apis/apps/v1alpha1"
+	clonesetutils "github.com/openkruise/kruise/pkg/controller/cloneset/utils"
+	"github.com/openkruise/kruise/pkg/features"
+	"github.com/openkruise/kruise/pkg/util"
+	utilclient "github.com/openkruise/kruise/pkg/util/client"
+	utilfeature "github.com/openkruise/kruise/pkg/util/feature"
+	"github.com/openkruise/kruise/pkg/util/fieldindex"
 )
 
 var c client.Client
@@ -89,7 +91,7 @@ func TestReconcile(t *testing.T) {
 
 	// Setup the Manager and Controller.  Wrap the Controller Reconcile function so it writes each request to a
 	// channel when it is finished.
-	mgr, err := manager.New(cfg, manager.Options{MetricsBindAddress: "0"})
+	mgr, err := manager.New(cfg, manager.Options{Metrics: metricsserver.Options{BindAddress: "0"}})
 	_ = fieldindex.RegisterFieldIndexes(mgr.GetCache())
 	g.Expect(err).NotTo(gomega.HaveOccurred())
 	c = utilclient.NewClientFromManager(mgr, "test-cloneset-controller")

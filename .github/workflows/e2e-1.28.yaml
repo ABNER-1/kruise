@@ -1,4 +1,4 @@
-name: E2E-1.24
+name: E2E-1.28
 
 on:
   push:
@@ -14,9 +14,8 @@ permissions: read-all
 env:
   # Common versions
   GO_VERSION: '1.20'
-  KIND_ACTION_VERSION: 'v1.3.0'
-  KIND_VERSION: 'v0.14.0'
-  KIND_IMAGE: 'kindest/node:v1.24.6'
+  KIND_VERSION: 'v0.22.0'
+  KIND_IMAGE: 'kindest/node:v1.28.7'
   KIND_CLUSTER_NAME: 'ci-testing'
 
 jobs:
@@ -36,7 +35,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf.yaml
+          config: ./test/kind-conf-none-fg.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -96,7 +95,7 @@ jobs:
               echo "test fail, dump kruise-daemon logs"
               while read pod; do 
                    kubectl logs -n kruise-system $pod
-              done < <(kubectl get pods -n kruise-system -l control-plane=daemon --no-headers | awk '{print $1}')             
+              done < <(kubectl get pods -n kruise-system -l control-plane=daemon --no-headers | awk '{print $1}')         
           fi
           exit $retVal
 
@@ -115,7 +114,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf.yaml
+          config: ./test/kind-conf-none-fg.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -187,7 +186,7 @@ jobs:
               echo "test fail, dump kruise-daemon logs"
               while read pod; do 
                    kubectl logs -n kruise-system $pod
-              done < <(kubectl get pods -n kruise-system -l control-plane=daemon --no-headers | awk '{print $1}')            
+              done < <(kubectl get pods -n kruise-system -l control-plane=daemon --no-headers | awk '{print $1}')         
           fi
           
           exit $retVal
@@ -207,7 +206,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf.yaml
+          config: ./test/kind-conf-none-fg.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -280,7 +279,7 @@ jobs:
               echo "test fail, dump kruise-daemon logs"
               while read pod; do 
                    kubectl logs -n kruise-system $pod
-              done < <(kubectl get pods -n kruise-system -l control-plane=daemon --no-headers | awk '{print $1}')          
+              done < <(kubectl get pods -n kruise-system -l control-plane=daemon --no-headers | awk '{print $1}')         
           fi
           exit $retVal
 
@@ -299,7 +298,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf.yaml
+          config: ./test/kind-conf-none-fg.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -372,7 +371,7 @@ jobs:
               echo "test fail, dump kruise-daemon logs"
               while read pod; do 
                    kubectl logs -n kruise-system $pod
-              done < <(kubectl get pods -n kruise-system -l control-plane=daemon --no-headers | awk '{print $1}')             
+              done < <(kubectl get pods -n kruise-system -l control-plane=daemon --no-headers | awk '{print $1}')           
           fi
           exit $retVal
 
@@ -391,7 +390,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf.yaml
+          config: ./test/kind-conf-none-fg.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -442,7 +441,7 @@ jobs:
               echo "test fail, dump kruise-daemon logs"
               while read pod; do 
                    kubectl logs -n kruise-system $pod
-              done < <(kubectl get pods -n kruise-system -l control-plane=daemon --no-headers | awk '{print $1}')           
+              done < <(kubectl get pods -n kruise-system -l control-plane=daemon --no-headers | awk '{print $1}')             
           fi
           exit $retVal
 
@@ -461,7 +460,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf.yaml
+          config: ./test/kind-conf-none-fg.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -526,7 +525,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf.yaml
+          config: ./test/kind-conf-none-fg.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -598,7 +597,7 @@ jobs:
               echo "test fail, dump kruise-daemon logs"
               while read pod; do 
                    kubectl logs -n kruise-system $pod
-              done < <(kubectl get pods -n kruise-system -l control-plane=daemon --no-headers | awk '{print $1}')           
+              done < <(kubectl get pods -n kruise-system -l control-plane=daemon --no-headers | awk '{print $1}')             
           fi
 
           exit $retVal
