@@ -26,7 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"github.com/openkruise/kruise/pkg/features"
-	"github.com/openkruise/kruise/pkg/util/controllerfinder"
 	utilfeature "github.com/openkruise/kruise/pkg/util/feature"
 )
 
@@ -40,8 +39,6 @@ type PodCreateHandler struct {
 
 	// Decoder decodes objects
 	Decoder *admission.Decoder
-
-	finders *controllerfinder.ControllerFinder
 }
 
 func (h *PodCreateHandler) validatingPodFn(ctx context.Context, req admission.Request) (allowed bool, reason string, err error) {

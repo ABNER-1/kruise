@@ -14,7 +14,7 @@ GOOS ?= $(shell go env GOOS)
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary. 
 # Run `setup-envtest list` to list available versions.
-ENVTEST_K8S_VERSION ?= 1.26.0
+ENVTEST_K8S_VERSION ?= 1.28.0
 
 # Setting SHELL to bash allows bash commands to be executed by recipes.
 # This is a requirement for 'setup-envtest.sh' in the test target.
@@ -27,7 +27,7 @@ all: build
 ##@ Development
 
 go_check:
-	@scripts/check_go_version "1.19.0"
+	@scripts/check_go_version "1.20"
 
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	@scripts/generate_client.sh
