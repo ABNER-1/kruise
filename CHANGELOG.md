@@ -1,5 +1,22 @@
 # Change Log
 
+## v1.6.3
+> Change log since v1.6.2
+
+### CVE FIX ([#1586](https://github.com/openkruise/kruise/pull/1586), [ABNER-1](https://github.com/ABNER-1)) ([#1591](https://github.com/openkruise/kruise/pull/1591), [ABNER-1](https://github.com/ABNER-1))
+- Remove containerd deps to resolve GHSA-259w-8hf6-59c2/GO-2023-1573, GHSA-hmfx-3pcx-653p/GO-2023-1574, GHSA-7ww5-4wqc-m92c/GO-2023-2412
+
+- Updates github.com/docker/docker to v26.0.2 to resolve GHSA-jq35-85cj-fj4p, GHSA-xw73-rw38-6vjc, GHSA-x84c-p2g9-rqv9
+
+- Updates go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc  to v0.46.1
+   and go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp to v0.46.1 to resolve GHSA-8pgv-569h-w5rw, GHSA-rcjv-mgp8-qvmr/GO-2023-2113
+
+- Updates k8s.io/kubernetes to 1.26.11 to resolve GHSA-hq6q-c2x6-hmch
+
+- Updates golang.org/x/sys to v0.19.0 to resolve GHSA-p782-xgp4-8hr8/GO-2022-0493
+
+- Fix "Incorrect conversion between integer types"
+
 ## v1.6.2
 > Change log since v1.6.1
 
