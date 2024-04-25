@@ -44,83 +44,83 @@ func init() {
 var (
 	scheme *runtime.Scheme
 
-	demoPodProbeMarker = appsv1alpha1.PodProbeMarker{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "ppm-1",
-		},
-		Spec: appsv1alpha1.PodProbeMarkerSpec{
-			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-					"app": "test",
-				},
-			},
-			Probes: []appsv1alpha1.PodContainerProbe{
-				{
-					Name:          "healthy",
-					ContainerName: "main",
-					Probe: appsv1alpha1.ContainerProbeSpec{
-						Probe: corev1.Probe{
-							ProbeHandler: corev1.ProbeHandler{
-								Exec: &corev1.ExecAction{
-									Command: []string{"/bin/sh", "-c", "/healthy.sh"},
-								},
-							},
-						},
-					},
-					PodConditionType: "game.kruise.io/healthy",
-					MarkerPolicy: []appsv1alpha1.ProbeMarkerPolicy{
-						{
-							State: appsv1alpha1.ProbeSucceeded,
-							Annotations: map[string]string{
-								"controller.kubernetes.io/pod-deletion-cost": "10",
-							},
-							Labels: map[string]string{
-								"server-healthy": "true",
-							},
-						},
-						{
-							State: appsv1alpha1.ProbeFailed,
-							Annotations: map[string]string{
-								"controller.kubernetes.io/pod-deletion-cost": "-10",
-							},
-							Labels: map[string]string{
-								"server-healthy": "false",
-							},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	demoNodePodProbe = appsv1alpha1.NodePodProbe{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: "node-1",
-		},
-		Spec: appsv1alpha1.NodePodProbeSpec{
-			PodProbes: []appsv1alpha1.PodProbe{
-				{
-					Name: "pod-1",
-					UID:  "pod-1-uid",
-					Probes: []appsv1alpha1.ContainerProbe{
-						{
-							Name:          "ppm-1#healthy",
-							ContainerName: "main",
-							Probe: appsv1alpha1.ContainerProbeSpec{
-								Probe: corev1.Probe{
-									ProbeHandler: corev1.ProbeHandler{
-										Exec: &corev1.ExecAction{
-											Command: []string{"/bin/sh", "-c", "/healthy.sh"},
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	}
+	//demoPodProbeMarker = appsv1alpha1.PodProbeMarker{
+	//	ObjectMeta: metav1.ObjectMeta{
+	//		Name: "ppm-1",
+	//	},
+	//	Spec: appsv1alpha1.PodProbeMarkerSpec{
+	//		Selector: &metav1.LabelSelector{
+	//			MatchLabels: map[string]string{
+	//				"app": "test",
+	//			},
+	//		},
+	//		Probes: []appsv1alpha1.PodContainerProbe{
+	//			{
+	//				Name:          "healthy",
+	//				ContainerName: "main",
+	//				Probe: appsv1alpha1.ContainerProbeSpec{
+	//					Probe: corev1.Probe{
+	//						ProbeHandler: corev1.ProbeHandler{
+	//							Exec: &corev1.ExecAction{
+	//								Command: []string{"/bin/sh", "-c", "/healthy.sh"},
+	//							},
+	//						},
+	//					},
+	//				},
+	//				PodConditionType: "game.kruise.io/healthy",
+	//				MarkerPolicy: []appsv1alpha1.ProbeMarkerPolicy{
+	//					{
+	//						State: appsv1alpha1.ProbeSucceeded,
+	//						Annotations: map[string]string{
+	//							"controller.kubernetes.io/pod-deletion-cost": "10",
+	//						},
+	//						Labels: map[string]string{
+	//							"server-healthy": "true",
+	//						},
+	//					},
+	//					{
+	//						State: appsv1alpha1.ProbeFailed,
+	//						Annotations: map[string]string{
+	//							"controller.kubernetes.io/pod-deletion-cost": "-10",
+	//						},
+	//						Labels: map[string]string{
+	//							"server-healthy": "false",
+	//						},
+	//					},
+	//				},
+	//			},
+	//		},
+	//	},
+	//}
+	//
+	//demoNodePodProbe = appsv1alpha1.NodePodProbe{
+	//	ObjectMeta: metav1.ObjectMeta{
+	//		Name: "node-1",
+	//	},
+	//	Spec: appsv1alpha1.NodePodProbeSpec{
+	//		PodProbes: []appsv1alpha1.PodProbe{
+	//			{
+	//				Name: "pod-1",
+	//				UID:  "pod-1-uid",
+	//				Probes: []appsv1alpha1.ContainerProbe{
+	//					{
+	//						Name:          "ppm-1#healthy",
+	//						ContainerName: "main",
+	//						Probe: appsv1alpha1.ContainerProbeSpec{
+	//							Probe: corev1.Probe{
+	//								ProbeHandler: corev1.ProbeHandler{
+	//									Exec: &corev1.ExecAction{
+	//										Command: []string{"/bin/sh", "-c", "/healthy.sh"},
+	//									},
+	//								},
+	//							},
+	//						},
+	//					},
+	//				},
+	//			},
+	//		},
+	//	},
+	//}
 )
 
 //
@@ -543,22 +543,22 @@ var (
 //	}
 //}
 
-func checkPodMarkerEqual(c client.WithWatch, t *testing.T, expect []*corev1.Pod) bool {
-	for i := range expect {
-		obj := expect[i]
-		pod := &corev1.Pod{}
-		err := c.Get(context.TODO(), client.ObjectKey{Namespace: obj.Namespace, Name: obj.Name}, pod)
-		if err != nil {
-			t.Fatalf("get NodePodProbe failed: %s", err.Error())
-			return false
-		}
-		if !reflect.DeepEqual(obj.Labels, pod.Labels) || !reflect.DeepEqual(obj.Annotations, pod.Annotations) ||
-			!reflect.DeepEqual(obj.Status.Conditions, pod.Status.Conditions) {
-			return false
-		}
-	}
-	return true
-}
+//func checkPodMarkerEqual(c client.WithWatch, t *testing.T, expect []*corev1.Pod) bool {
+//	for i := range expect {
+//		obj := expect[i]
+//		pod := &corev1.Pod{}
+//		err := c.Get(context.TODO(), client.ObjectKey{Namespace: obj.Namespace, Name: obj.Name}, pod)
+//		if err != nil {
+//			t.Fatalf("get NodePodProbe failed: %s", err.Error())
+//			return false
+//		}
+//		if !reflect.DeepEqual(obj.Labels, pod.Labels) || !reflect.DeepEqual(obj.Annotations, pod.Annotations) ||
+//			!reflect.DeepEqual(obj.Status.Conditions, pod.Status.Conditions) {
+//			return false
+//		}
+//	}
+//	return true
+//}
 
 func TestSyncPodFromNodePodProbe(t *testing.T) {
 	cases := []struct {
