@@ -129,7 +129,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 
 	// Watch for changes to Pod
 	err = c.Watch(source.Kind(mgr.GetCache(), &corev1.Pod{}), &podEventHandler{
-		enqueueHandler: handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &corev1.Pod{}, handler.OnlyControllerOwner()),
+		enqueueHandler: handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &appsv1alpha1.BroadcastJob{}, handler.OnlyControllerOwner()),
 	})
 	if err != nil {
 		return err
