@@ -362,6 +362,7 @@ func (r *ReconcileNodePodProbe) updatePodProbeStatus(pod *corev1.Pod, status app
 			reflect.DeepEqual(oldMetadata.Annotations, podClone.Annotations) {
 			return nil
 		}
+		// todo: resolve https://github.com/openkruise/kruise/issues/1597
 		return r.Client.Status().Update(context.TODO(), podClone)
 	}); err != nil {
 		klog.Errorf("NodePodProbe patch pod(%s/%s) status failed: %s", podClone.Namespace, podClone.Name, err.Error())
