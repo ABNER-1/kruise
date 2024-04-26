@@ -18,12 +18,15 @@ package inplaceupdate
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
 
 	appspub "github.com/openkruise/kruise/apis/apps/pub"
+	"github.com/openkruise/kruise/pkg/features"
 	"github.com/openkruise/kruise/pkg/util"
+	utilfeature "github.com/openkruise/kruise/pkg/util/feature"
 	"github.com/openkruise/kruise/pkg/util/volumeclaimtemplate"
 
 	apps "k8s.io/api/apps/v1"
@@ -563,11 +566,19 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
   }
 }`
 
+	desiredWhenDisableFG := &UpdateSpec{
+		Revision: "new-revision",
+		ContainerImages: map[string]string{
+			"nginx": "nginx:stable-alpine",
+		},
+	}
 	ignoreVCTHashUpdateOpts := &UpdateOptions{IgnoreVolumeClaimTemplatesHashDiff: true}
 	tests := []struct {
 		name string
 		args args
 		want *UpdateSpec
+
+		wantWhenDisable *UpdateSpec
 	}{
 		{
 			name: "both revision annotation is nil=> ignore",
@@ -592,12 +603,8 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 				},
 				opts: &UpdateOptions{},
 			},
-			want: &UpdateSpec{
-				Revision: "new-revision",
-				ContainerImages: map[string]string{
-					"nginx": "nginx:stable-alpine",
-				},
-			},
+			want:            desiredWhenDisableFG,
+			wantWhenDisable: desiredWhenDisableFG,
 		},
 		{
 			name: "old revision annotation is nil=> ignore",
@@ -622,12 +629,8 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 				},
 				opts: &UpdateOptions{},
 			},
-			want: &UpdateSpec{
-				Revision: "new-revision",
-				ContainerImages: map[string]string{
-					"nginx": "nginx:stable-alpine",
-				},
-			},
+			want:            desiredWhenDisableFG,
+			wantWhenDisable: desiredWhenDisableFG,
 		},
 		{
 			name: "new revision annotation is nil => ignore",
@@ -652,12 +655,8 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 				},
 				opts: &UpdateOptions{},
 			},
-			want: &UpdateSpec{
-				Revision: "new-revision",
-				ContainerImages: map[string]string{
-					"nginx": "nginx:stable-alpine",
-				},
-			},
+			want:            desiredWhenDisableFG,
+			wantWhenDisable: desiredWhenDisableFG,
 		},
 		{
 			name: "revision annotation changes => recreate",
@@ -682,7 +681,8 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 				},
 				opts: &UpdateOptions{},
 			},
-			want: nil,
+			want:            nil,
+			wantWhenDisable: desiredWhenDisableFG,
 		},
 		{
 			name: "the same revision annotation => in-place update",
@@ -707,12 +707,8 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 				},
 				opts: &UpdateOptions{},
 			},
-			want: &UpdateSpec{
-				Revision: "new-revision",
-				ContainerImages: map[string]string{
-					"nginx": "nginx:stable-alpine",
-				},
-			},
+			want:            desiredWhenDisableFG,
+			wantWhenDisable: desiredWhenDisableFG,
 		},
 		{
 			name: "both empty revision annotation => in-place update",
@@ -737,12 +733,8 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 				},
 				opts: &UpdateOptions{},
 			},
-			want: &UpdateSpec{
-				Revision: "new-revision",
-				ContainerImages: map[string]string{
-					"nginx": "nginx:stable-alpine",
-				},
-			},
+			want:            desiredWhenDisableFG,
+			wantWhenDisable: desiredWhenDisableFG,
 		},
 
 		// IgnoreVolumeClaimTemplatesHashDiff is true
@@ -769,12 +761,8 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 				},
 				opts: ignoreVCTHashUpdateOpts,
 			},
-			want: &UpdateSpec{
-				Revision: "new-revision",
-				ContainerImages: map[string]string{
-					"nginx": "nginx:stable-alpine",
-				},
-			},
+			want:            desiredWhenDisableFG,
+			wantWhenDisable: desiredWhenDisableFG,
 		},
 		{
 			name: "IgnoreVolumeClaimTemplatesHashDiff&old revision annotation is nil=> ignore",
@@ -799,12 +787,8 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 				},
 				opts: ignoreVCTHashUpdateOpts,
 			},
-			want: &UpdateSpec{
-				Revision: "new-revision",
-				ContainerImages: map[string]string{
-					"nginx": "nginx:stable-alpine",
-				},
-			},
+			want:            desiredWhenDisableFG,
+			wantWhenDisable: desiredWhenDisableFG,
 		},
 		{
 			name: "IgnoreVolumeClaimTemplatesHashDiff&new revision annotation is nil => ignore",
@@ -829,12 +813,8 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 				},
 				opts: ignoreVCTHashUpdateOpts,
 			},
-			want: &UpdateSpec{
-				Revision: "new-revision",
-				ContainerImages: map[string]string{
-					"nginx": "nginx:stable-alpine",
-				},
-			},
+			want:            desiredWhenDisableFG,
+			wantWhenDisable: desiredWhenDisableFG,
 		},
 		{
 			name: "IgnoreVolumeClaimTemplatesHashDiff&revision annotation changes => in-place update",
@@ -859,12 +839,8 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 				},
 				opts: ignoreVCTHashUpdateOpts,
 			},
-			want: &UpdateSpec{
-				Revision: "new-revision",
-				ContainerImages: map[string]string{
-					"nginx": "nginx:stable-alpine",
-				},
-			},
+			want:            desiredWhenDisableFG,
+			wantWhenDisable: desiredWhenDisableFG,
 		},
 		{
 			name: "IgnoreVolumeClaimTemplatesHashDiff&the same revision annotation => in-place update",
@@ -889,12 +865,8 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 				},
 				opts: ignoreVCTHashUpdateOpts,
 			},
-			want: &UpdateSpec{
-				Revision: "new-revision",
-				ContainerImages: map[string]string{
-					"nginx": "nginx:stable-alpine",
-				},
-			},
+			want:            desiredWhenDisableFG,
+			wantWhenDisable: desiredWhenDisableFG,
 		},
 		{
 			name: "IgnoreVolumeClaimTemplatesHashDiff&both empty revision annotation => in-place update",
@@ -919,26 +891,32 @@ func Test_defaultCalculateInPlaceUpdateSpec_VCTHash(t *testing.T) {
 				},
 				opts: ignoreVCTHashUpdateOpts,
 			},
-			want: &UpdateSpec{
-				Revision: "new-revision",
-				ContainerImages: map[string]string{
-					"nginx": "nginx:stable-alpine",
-				},
-			},
+			want:            desiredWhenDisableFG,
+			wantWhenDisable: desiredWhenDisableFG,
 		},
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := defaultCalculateInPlaceUpdateSpec(tt.args.oldRevision, tt.args.newRevision, tt.args.opts)
-			if got != nil && tt.want != nil {
-				if !reflect.DeepEqual(got.ContainerImages, tt.want.ContainerImages) {
-					t.Errorf("defaultCalculateInPlaceUpdateSpec() = %v, want %v", got, tt.want)
+	testWhenEnable := func(enable bool) {
+		defer utilfeature.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.RecreatePodWhenChangeVCTInCloneSetGate, enable)()
+		for _, tt := range tests {
+			t.Run(fmt.Sprintf("%v-%v", tt.name, enable), func(t *testing.T) {
+				got := defaultCalculateInPlaceUpdateSpec(tt.args.oldRevision, tt.args.newRevision, tt.args.opts)
+				wanted := tt.wantWhenDisable
+				if utilfeature.DefaultFeatureGate.Enabled(features.RecreatePodWhenChangeVCTInCloneSetGate) {
+					wanted = tt.want
 				}
-			} else if !(got == nil && tt.want == nil) {
-				t.Errorf("defaultCalculateInPlaceUpdateSpec() = %v, want %v", got, tt.want)
-			}
-			// got == nil && tt.want == nil => pass
-		})
+				if got != nil && wanted != nil {
+					if !reflect.DeepEqual(got.ContainerImages, wanted.ContainerImages) {
+						t.Errorf("defaultCalculateInPlaceUpdateSpec() = %v, want %v", got, wanted)
+					}
+				} else if !(got == nil && wanted == nil) {
+					t.Errorf("defaultCalculateInPlaceUpdateSpec() = %v, want %v", got, wanted)
+				}
+				// got == nil && tt.want == nil => pass
+			})
+		}
 	}
+	testWhenEnable(true)
+	testWhenEnable(false)
+
 }

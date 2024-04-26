@@ -154,12 +154,19 @@ func TestReconcile(t *testing.T) {
 	// Test for pods update
 	testUpdate(g, instance)
 
-	// Test for pods update with volume claim changed
-	testUpdateVolumeClaimTemplates(t, g, instance, nil)
+	testVCTWhenFG := func(enable bool) {
+		defer utilfeature.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.RecreatePodWhenChangeVCTInCloneSetGate, enable)()
 
-	// Clean vct hash before each case => lack vct hash -> keep in-place update
-	testUpdateVolumeClaimTemplates(t, g, instance, cleanVCTHashInRevisions)
+		// Test for pods update with volume claim changed
+		testUpdateVolumeClaimTemplates(t, g, instance, nil)
 
+		// Clean vct hash before each case => lack vct hash -> keep in-place update
+		testUpdateVolumeClaimTemplates(t, g, instance, cleanVCTHashInRevisions)
+	}
+	testVCTWhenFG(true)
+	testVCTWhenFG(false)
+
+	defer utilfeature.SetFeatureGateDuringTest(t, utilfeature.DefaultFeatureGate, features.RecreatePodWhenChangeVCTInCloneSetGate, true)()
 	// Test case with history revision
 	testUpdateVolumeClaimTemplates2(t, g, instance)
 }
@@ -497,7 +504,7 @@ func testUpdateVolumeClaimTemplates(t *testing.T, g *gomega.GomegaWithT, instanc
 	missingVCTHash, volumeSizeCheck := false, true
 	replicas := 4
 	var postHook testCloneSetHookFn = nil
-	if preHook != nil {
+	if preHook != nil || !utilfeature.DefaultFeatureGate.Enabled(features.RecreatePodWhenChangeVCTInCloneSetGate) {
 		// when vct hash missing, recreate pod => in-place update pod
 		missingVCTHash = true
 		volumeSizeCheck = false

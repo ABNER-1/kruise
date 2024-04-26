@@ -23,6 +23,7 @@ import (
 	"strings"
 
 	"github.com/appscode/jsonpatch"
+
 	appspub "github.com/openkruise/kruise/apis/apps/pub"
 	"github.com/openkruise/kruise/pkg/features"
 	"github.com/openkruise/kruise/pkg/util"
@@ -236,10 +237,13 @@ func defaultCalculateInPlaceUpdateSpec(oldRevision, newRevision *apps.Controller
 		return nil
 	}
 
-	if !opts.IgnoreVolumeClaimTemplatesHashDiff {
-		canInPlace := volumeclaimtemplate.CanVCTemplateInplaceUpdate(oldRevision, newRevision)
-		if !canInPlace {
-			return nil
+	// RecreatePodWhenChangeVCTInCloneSetGate enabled
+	if utilfeature.DefaultFeatureGate.Enabled(features.RecreatePodWhenChangeVCTInCloneSetGate) {
+		if !opts.IgnoreVolumeClaimTemplatesHashDiff {
+			canInPlace := volumeclaimtemplate.CanVCTemplateInplaceUpdate(oldRevision, newRevision)
+			if !canInPlace {
+				return nil
+			}
 		}
 	}
 
