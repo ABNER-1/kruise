@@ -7,7 +7,7 @@ require (
 	github.com/appscode/jsonpatch v1.0.1
 	github.com/codegangsta/negroni v1.0.0
 	github.com/docker/distribution v2.8.2+incompatible
-	github.com/docker/docker v26.0.1+incompatible
+	github.com/docker/docker v26.0.2+incompatible
 	github.com/evanphx/json-patch v5.6.0+incompatible
 	github.com/fsnotify/fsnotify v1.7.0
 	github.com/go-bindata/go-bindata v3.1.2+incompatible
@@ -175,6 +175,7 @@ require (
 )
 
 replace (
+	golang.org/x/sys => golang.org/x/sys v0.19.0
 	k8s.io/api => k8s.io/api v0.28.9
 	k8s.io/apiextensions-apiserver => k8s.io/apiextensions-apiserver v0.28.9
 	k8s.io/apimachinery => k8s.io/apimachinery v0.28.9
