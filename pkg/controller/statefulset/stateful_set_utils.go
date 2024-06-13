@@ -78,6 +78,13 @@ func getOrdinal(pod *v1.Pod) int {
 	return ordinal
 }
 
+// podInOrdinalRange returns true if the pod ordinal is within the allowed
+// range of ordinals that this StatefulSet is set to control.
+func podInOrdinalRange(pod *v1.Pod, set *appsv1beta1.StatefulSet, replicaCnt int) bool {
+	ordinal := getOrdinal(pod)
+	return ordinal >= getStartOrdinal(set) && ordinal <= getStartOrdinal(set)+replicaCnt-1
+}
+
 // getPodName gets the name of set's child Pod with an ordinal index of ordinal
 func getPodName(set *appsv1beta1.StatefulSet, ordinal int) string {
 	return fmt.Sprintf("%s-%d", set.Name, ordinal)
@@ -165,12 +172,12 @@ func claimOwnerMatchesSetAndPod(claim *v1.PersistentVolumeClaim, set *appsv1beta
 		if hasOwnerRef(claim, set) {
 			return false
 		}
-		podScaledDown := ord >= replicaCount || reserveOrdinals.Has(ord)
+		podScaledDown := !podInOrdinalRange(pod, set, replicaCount) || reserveOrdinals.Has(ord)
 		if podScaledDown != hasOwnerRef(claim, pod) {
 			return false
 		}
 	case policy.WhenScaled == delete && policy.WhenDeleted == delete:
-		podScaledDown := ord >= replicaCount || reserveOrdinals.Has(ord)
+		podScaledDown := !podInOrdinalRange(pod, set, replicaCount) || reserveOrdinals.Has(ord)
 		// If a pod is scaled down, there should be no set ref and a pod ref;
 		// if the pod is not scaled down it's the other way around.
 		if podScaledDown == hasOwnerRef(claim, set) {
@@ -223,7 +230,7 @@ func updateClaimOwnerRefForSetAndPod(claim *v1.PersistentVolumeClaim, set *appsv
 		needsUpdate = removeOwnerRef(claim, pod) || needsUpdate
 	case policy.WhenScaled == delete && policy.WhenDeleted == retain:
 		needsUpdate = removeOwnerRef(claim, set) || needsUpdate
-		podScaledDown := ord >= replicaCount || reserveOrdinals.Has(ord)
+		podScaledDown := ord >= replicaCount+getStartOrdinal(set) || reserveOrdinals.Has(ord)
 		if podScaledDown {
 			needsUpdate = setOwnerRef(claim, pod, &podMeta) || needsUpdate
 		}
@@ -231,7 +238,7 @@ func updateClaimOwnerRefForSetAndPod(claim *v1.PersistentVolumeClaim, set *appsv
 			needsUpdate = removeOwnerRef(claim, pod) || needsUpdate
 		}
 	case policy.WhenScaled == delete && policy.WhenDeleted == delete:
-		podScaledDown := ord >= replicaCount || reserveOrdinals.Has(ord)
+		podScaledDown := ord >= replicaCount+getStartOrdinal(set) || reserveOrdinals.Has(ord)
 		if podScaledDown {
 			needsUpdate = removeOwnerRef(claim, set) || needsUpdate
 			needsUpdate = setOwnerRef(claim, pod, &podMeta) || needsUpdate
@@ -399,9 +406,19 @@ func isCreated(pod *v1.Pod) bool {
 	return pod.Status.Phase != ""
 }
 
+// isPending returns true if pod has a Phase of PodPending
+func isPending(pod *v1.Pod) bool {
+	return pod.Status.Phase == v1.PodPending
+}
+
 // isFailed returns true if pod has a Phase of PodFailed
 func isFailed(pod *v1.Pod) bool {
 	return pod.Status.Phase == v1.PodFailed
+}
+
+// isSucceeded returns true if pod has a Phase of PodSucceeded
+func isSucceeded(pod *v1.Pod) bool {
+	return pod.Status.Phase == v1.PodSucceeded
 }
 
 // isTerminating returns true if pod's DeletionTimestamp has been set
@@ -639,6 +656,20 @@ func (ao ascendingOrdinal) Less(i, j int) bool {
 	return getOrdinal(ao[i]) < getOrdinal(ao[j])
 }
 
+type descendingOrdinal []*v1.Pod
+
+func (do descendingOrdinal) Len() int {
+	return len(do)
+}
+
+func (do descendingOrdinal) Swap(i, j int) {
+	do[i], do[j] = do[j], do[i]
+}
+
+func (do descendingOrdinal) Less(i, j int) bool {
+	return getOrdinal(do[i]) > getOrdinal(do[j])
+}
+
 // NewStatefulsetCondition creates a new statefulset condition.
 func NewStatefulsetCondition(conditionType apps.StatefulSetConditionType, conditionStatus v1.ConditionStatus, reason, message string) apps.StatefulSetCondition {
 	return apps.StatefulSetCondition{
@@ -700,6 +731,7 @@ func decreaseAndCheckMaxUnavailable(maxUnavailable *int) bool {
 }
 
 // return parameters is replicaCount and reserveOrdinals, and they are used to support reserveOrdinals scenarios.
+// ReplicasRange => [0, replicaMaxOrdinal - startOrdinal)
 // When configured as follows:
 /*
 	apiVersion: apps.kruise.io/v1beta1
@@ -710,17 +742,20 @@ func decreaseAndCheckMaxUnavailable(maxUnavailable *int) bool {
 	  reserveOrdinals:
 	  - 1
       - 3
+      Spec.Ordinals.Start: 2
 */
-// return replicaCount=6, reserveOrdinals={1, 3}
-
+// result is maxReplicaIdx = 5, reserveOrdinals = {1, 3}
+// replicas[5] stores [replica-2, nil(reserveOrdinal 3), replica-4, replica-5, replica-6]
+// todo: maybe we should filter effective reserveOrdinals in webhook, reserveOrdinals = {3}
 func getStatefulSetReplicasRange(set *appsv1beta1.StatefulSet) (int, sets.Int) {
 	reserveOrdinals := sets.NewInt(set.Spec.ReserveOrdinals...)
-	replicaCount := 0
-	for realReplicaCount := 0; realReplicaCount < int(*set.Spec.Replicas); replicaCount++ {
-		if reserveOrdinals.Has(replicaCount) {
+	replicaMaxOrdinal := getStartOrdinal(set)
+	for realReplicaCount := 0; realReplicaCount < int(*set.Spec.Replicas); replicaMaxOrdinal++ {
+		if reserveOrdinals.Has(replicaMaxOrdinal) {
 			continue
 		}
 		realReplicaCount++
 	}
-	return replicaCount, reserveOrdinals
+	maxReplicaIdx := replicaMaxOrdinal - getStartOrdinal(set)
+	return maxReplicaIdx, reserveOrdinals
 }
