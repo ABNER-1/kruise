@@ -229,6 +229,31 @@ func CreatesPods(t *testing.T, set *appsv1beta1.StatefulSet, invariants invarian
 	if set.Status.UpdatedAvailableReplicas != 3 {
 		t.Error("Failed to set UpdatedAvailableReplicas correctly")
 	}
+	// Check all pods have correct pod index label.
+	if utilfeature.DefaultFeatureGate.Enabled(features.PodIndexLabel) {
+		selector, err := metav1.LabelSelectorAsSelector(set.Spec.Selector)
+		if err != nil {
+			t.Error(err)
+		}
+		pods, err := om.podsLister.Pods(set.Namespace).List(selector)
+		if err != nil {
+			t.Error(err)
+		}
+		if len(pods) != 3 {
+			t.Errorf("Expected 3 pods, got %d", len(pods))
+		}
+		for _, pod := range pods {
+			podIndexFromLabel, exists := pod.Labels[apps.PodIndexLabel]
+			if !exists {
+				t.Errorf("Missing pod index label: %s", apps.PodIndexLabel)
+				continue
+			}
+			podIndexFromName := strconv.Itoa(getOrdinal(pod))
+			if podIndexFromLabel != podIndexFromName {
+				t.Errorf("Pod index label value (%s) does not match pod index in pod name (%s)", podIndexFromLabel, podIndexFromName)
+			}
+		}
+	}
 }
 
 func ScalesUp(t *testing.T, set *appsv1beta1.StatefulSet, invariants invariantFunc) {

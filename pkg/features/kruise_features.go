@@ -122,6 +122,9 @@ const (
 
 	// Enables a StatefulSet to start from an arbitrary non zero ordinal
 	StatefulSetStartOrdinal featuregate.Feature = "StatefulSetStartOrdinal"
+
+	// Set pod completion index as a pod label for StatefulSet.
+	PodIndexLabel featuregate.Feature = "PodIndexLabel"
 )
 
 var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
@@ -154,6 +157,7 @@ var defaultFeatureGates = map[featuregate.Feature]featuregate.FeatureSpec{
 	EnhancedLivenessProbeGate:              {Default: false, PreRelease: featuregate.Alpha},
 	RecreatePodWhenChangeVCTInCloneSetGate: {Default: false, PreRelease: featuregate.Alpha},
 	StatefulSetStartOrdinal:                {Default: false, PreRelease: featuregate.Alpha},
+	PodIndexLabel:                          {Default: true, PreRelease: featuregate.Alpha},
 }
 
 func init() {
