@@ -4,8 +4,8 @@ import v1 "k8s.io/api/core/v1"
 
 type CheckClaimFn = func(*v1.PersistentVolumeClaim, *v1.PersistentVolumeClaim) bool
 
-// CheckClaimCompatibleWithoutSize PersistentVolumeClaim Compare function
-func CheckClaimCompatibleWithoutSize(claim, template *v1.PersistentVolumeClaim) bool {
+// IsClaimCompatibleWithoutSize PersistentVolumeClaim Compare function
+func IsClaimCompatibleWithoutSize(claim, template *v1.PersistentVolumeClaim) bool {
 	// when there is default sc,
 	// template StorageClassName is nil but claim is not nil
 	if template.Spec.StorageClassName != nil &&
@@ -45,7 +45,7 @@ func IsPatchPVCCompleted(claim, template *v1.PersistentVolumeClaim) bool {
 }
 
 func CompareWithCheckFn(claim, template *v1.PersistentVolumeClaim, cmp CheckClaimFn) (matched, cmpResult bool) {
-	if !CheckClaimCompatibleWithoutSize(claim, template) {
+	if !IsClaimCompatibleWithoutSize(claim, template) {
 		return false, false
 	}
 	if cmp(claim, template) {
@@ -55,7 +55,7 @@ func CompareWithCheckFn(claim, template *v1.PersistentVolumeClaim, cmp CheckClai
 }
 
 func IsPVCCompatibleAndReady(claim, template *v1.PersistentVolumeClaim) (compatible bool, ready bool) {
-	if !CheckClaimCompatibleWithoutSize(claim, template) {
+	if !IsClaimCompatibleWithoutSize(claim, template) {
 		return false, false
 	}
 	compatible = func(claim, template *v1.PersistentVolumeClaim) bool {
