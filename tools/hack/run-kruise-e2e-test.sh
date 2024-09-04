@@ -18,7 +18,7 @@ set -ex
 export KUBECONFIG=${HOME}/.kube/config
 make ginkgo
 set +e
-./bin/ginkgo -timeout 60m -v --focus='\[apps\] StatefulSet' test/e2e
+./bin/ginkgo -p -timeout 60m -v --focus='\[apps\] InplaceVPA' test/e2e
 retVal=$?
 restartCount=$(kubectl get pod -n kruise-system -l control-plane=controller-manager --no-headers | awk '{print $4}')
 if [ "${restartCount}" -eq "0" ];then

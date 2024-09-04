@@ -34,7 +34,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf-none-fg.yaml
+          config: ./test/kind-conf-with-vpa.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Install-CSI
         run: |
@@ -117,7 +117,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf-none-fg.yaml
+          config: ./test/kind-conf-with-vpa.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -196,7 +196,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf-none-fg.yaml
+          config: ./test/kind-conf-with-vpa.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -288,7 +288,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf-none-fg.yaml
+          config: ./test/kind-conf-with-vpa.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -380,7 +380,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf-none-fg.yaml
+          config: ./test/kind-conf-with-vpa.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -472,7 +472,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf-none-fg.yaml
+          config: ./test/kind-conf-with-vpa.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -542,7 +542,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf-none-fg.yaml
+          config: ./test/kind-conf-with-vpa.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
@@ -607,7 +607,7 @@ jobs:
         with:
           node_image: ${{ env.KIND_IMAGE }}
           cluster_name: ${{ env.KIND_CLUSTER_NAME }}
-          config: ./test/kind-conf-none-fg.yaml
+          config: ./test/kind-conf-with-vpa.yaml
           version: ${{ env.KIND_VERSION }}
       - name: Build image
         run: |
