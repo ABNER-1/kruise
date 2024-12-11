@@ -55,7 +55,8 @@ var _ admission.Handler = &PodUnavailableBudgetCreateUpdateHandler{}
 
 // Handle handles admission requests.
 func (h *PodUnavailableBudgetCreateUpdateHandler) Handle(ctx context.Context, req admission.Request) admission.Response {
-	if !utilfeature.DefaultFeatureGate.Enabled(features.PodUnavailableBudgetDeleteGate) && !utilfeature.DefaultFeatureGate.Enabled(features.PodUnavailableBudgetUpdateGate) {
+	if !utilfeature.DefaultFeatureGate.Enabled(features.PodUnavailableBudgetDeleteGate) &&
+		!utilfeature.DefaultFeatureGate.Enabled(features.PodUnavailableBudgetUpdateGate) {
 		return admission.Errored(http.StatusBadRequest, fmt.Errorf("feature PodUnavailableBudget is invalid, please open via feature-gate(%s, %s)",
 			features.PodUnavailableBudgetDeleteGate, features.PodUnavailableBudgetUpdateGate))
 	}

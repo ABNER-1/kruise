@@ -770,11 +770,8 @@ func (ssc *defaultStatefulSetControl) deletePod(set *appsv1beta1.StatefulSet, po
 }
 
 func (ssc *defaultStatefulSetControl) refreshPodState(set *appsv1beta1.StatefulSet, pod *v1.Pod, updateRevision string) (bool, time.Duration, error) {
-	if set.Spec.UpdateStrategy.RollingUpdate == nil {
-		return false, 0, nil
-	}
 	opts := &inplaceupdate.UpdateOptions{}
-	if set.Spec.UpdateStrategy.RollingUpdate.InPlaceUpdateStrategy != nil {
+	if set.Spec.UpdateStrategy.RollingUpdate != nil && set.Spec.UpdateStrategy.RollingUpdate.InPlaceUpdateStrategy != nil {
 		opts.GracePeriodSeconds = set.Spec.UpdateStrategy.RollingUpdate.InPlaceUpdateStrategy.GracePeriodSeconds
 	}
 	opts = inplaceupdate.SetOptionsDefaults(opts)
