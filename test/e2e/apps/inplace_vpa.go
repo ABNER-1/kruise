@@ -892,13 +892,28 @@ var _ = SIGDescribe("InplaceVPA", func() {
 				gomega.Expect(err).NotTo(gomega.HaveOccurred())
 				gomega.Expect(len(pods)).Should(gomega.Equal(1))
 
+				ginkgo.By("Verify nginx should be stopped after new redis has started")
+				gomega.Eventually(func() bool {
+					pods, err = tester.ListPodsForCloneSet(cs.Name)
+					gomega.Expect(err).NotTo(gomega.HaveOccurred())
+					a1, b1, c1 := getResourcesInfo(pods[0])
+					if a1 != a || b1 != b || c1 != c {
+						framework.Logf("updateSpec %v", a1)
+						framework.Logf("spec %v", b1)
+						framework.Logf("container status %v ", c1)
+						a, b, c = a1, b1, c1
+					}
+					SkipTestWhenCgroupError(pods[0])
+					// we will wait nginx last terminated state exist and redis running state exist
+					return util.GetContainerStatus("nginx", pods[0]).LastTerminationState.Terminated != nil &&
+						util.GetContainerStatus("redis", pods[0]).State.Running != nil
+				}, 600*time.Second, 3*time.Second).Should(gomega.Equal(true))
 				pod := pods[0]
 				nginxContainerStatus := util.GetContainerStatus("nginx", pod)
 				redisContainerStatus := util.GetContainerStatus("redis", pod)
 				gomega.Expect(nginxContainerStatus.RestartCount).Should(gomega.Equal(int32(1)))
 				gomega.Expect(redisContainerStatus.RestartCount).Should(gomega.Equal(int32(1)))
 
-				ginkgo.By("Verify nginx should be stopped after new redis has started")
 				gomega.Expect(nginxContainerStatus.LastTerminationState.Terminated.FinishedAt.After(redisContainerStatus.State.Running.StartedAt.Time.Add(time.Second*10))).
 					Should(gomega.Equal(true), fmt.Sprintf("nginx finish at %v is not after redis start %v + 10s",
 						nginxContainerStatus.LastTerminationState.Terminated.FinishedAt,
