@@ -19,10 +19,12 @@ package inplaceupdate
 import (
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"strconv"
 	"strings"
 
 	"github.com/appscode/jsonpatch"
+	hashutil "k8s.io/kubernetes/pkg/util/hash"
 
 	appspub "github.com/openkruise/kruise/apis/apps/pub"
 	"github.com/openkruise/kruise/pkg/features"
@@ -491,6 +493,16 @@ const (
 	extractedEnvFromMetadataHash hashType = "ExtractedEnvFromMetadataHash"
 )
 
+// hashContainer copy from kubelet v1.31-
+func hashContainer(container *v1.Container) uint64 {
+	hash := fnv.New32a()
+	// Omit nil or empty field when calculating hash value
+	// Please see https://github.com/kubernetes/kubernetes/issues/53644
+	containerJSON, _ := json.Marshal(container)
+	hashutil.DeepHashObject(hash, containerJSON)
+	return uint64(hash.Sum32())
+}
+
 // The requirements for hash consistent:
 // 1. all containers in spec.containers should also be in status.containerStatuses and runtime-container-meta
 // 2. all containers in status.containerStatuses and runtime-container-meta should have the same containerID
@@ -533,7 +545,15 @@ func checkAllContainersHashConsistent(pod *v1.Pod, runtimeContainerMetaSet *apps
 		switch hashType {
 		case plainHash:
 			if expectedHash := kubeletcontainer.HashContainer(containerSpec); containerMeta.Hashes.PlainHash != expectedHash {
-				klog.InfoS("Find container in runtime-container-meta for Pod has different plain hash with spec",
+				klog.InfoS("Find container in runtime-container-meta for Pod has different plain hash(hash only image) with spec",
+					"containerName", containerSpec.Name, "namespace", pod.Namespace, "podName", pod.Name,
+					"metaHash", containerMeta.Hashes.PlainHash, "expectedHash", expectedHash)
+			}
+			// To adapt to Kubernetes environments running versions below 1.31,
+			// the hash value reported by the daemon is still calculated by the lower-version kubelet.
+			//i.e., using all fields for the computation.
+			if expectedHash := hashContainer(containerSpec); containerMeta.Hashes.PlainHash != expectedHash {
+				klog.InfoS("Find container in runtime-container-meta for Pod has different plain hash(hash all field) with spec",
 					"containerName", containerSpec.Name, "namespace", pod.Namespace, "podName", pod.Name,
 					"metaHash", containerMeta.Hashes.PlainHash, "expectedHash", expectedHash)
 				return false
